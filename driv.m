@@ -6,16 +6,16 @@ y = zeros(3,1);
 x(1) = 1;
 x(2) = 2;
 x(3) = 3;
-y(1) = 4; % imaginary component
-y(2) = 5;
+y(1) = 1; % imaginary component
+y(2) = 1;
 y(3) = 0; % need to enforce this?
 
 % right-hand side for this solution
-b = F(x, y, 0, zeros(6,1));
+b = F2(x, y, 0, zeros(6,1));
 
 % check initial solution is not a final solution
-F(x, y, 1, b);
-F2(x, y, 1, b);
+% F(x, y, 1, b);
+% F2(x, y, 1, b);
 
 % rank is 5
 %J = Jac(x, y, 0.1);
@@ -25,30 +25,31 @@ F2(x, y, 1, b);
 
 
 
-deltat = 0.0001;
+deltat = 0.2;
 t = 0;
 
-for step = 1:100
-  fprintf('======== step %d ========= %f\n', step, t);
+for step = 1:1
   % predictor step using tangent
-  J = Jac(x, y, t);
-  f = dFdt(x, y, t);
-  inc = -J(1:5,1:5) \ f(1:5);
-  x = x + deltat*inc(1:3);
-  y(1:2) = y(1:2) + deltat*inc(4:5);
+% J = Jac(x, y, t);
+% f = dFdt(x, y);
+% inc = -J(:,1:5) \ f;
+% x = x + deltat*inc(1:3);
+% y(1:2) = y(1:2) + deltat*inc(4:5);
   t = t + deltat;
-  norm(F(x, y, t, b))
   
+  fprintf('======== time step %d: %f =========\n', step, t);
+  fprintf('After predict: %f\n', norm(F2(x, y, t, b)));
+
   % corrector using Newton iterations UNDONE
   % is this the correct way to solve a nonlinear least squares problem?
   % how to simply to get a square matrix??
   for iter = 1:5
-    J = Jac(x, y, t);
-    f = F(x, y, t, b);
-    inc = -J(1:5,1:5) \ f(1:5);
+    J = Jac2(x, y, t);
+    f = F2(x, y, t, b);
+    inc = -J(:,1:5) \ f;
     x = x + inc(1:3);
     y(1:2) = y(1:2) + inc(4:5);
-    norm(F(x, y, t, b))
+    fprintf('Newton step %d: %f\n', iter, norm(F2(x, y, t, b)));
   end
   
   % if Newton did not converge, then backtrack?
@@ -81,7 +82,7 @@ f(5) = .5*(1+t) * ( -x(2)*y(3) + x(3)*y(2) ) - b(5);
 f(6) = .5*(1+t) * ( -x(3)*y(1) + x(1)*y(3) ) - b(6);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function d = dFdt2(x, y, t)
+function d = dFdt2(x, y);
 
 A0 = [1 .5 0; 0 1 .5; .5 0 1];
 A1 = [1  1 0; 0 1  1;  1 0 1];
@@ -93,7 +94,7 @@ f = diag(z)*(T*conj(z));
 d = [real(f); imag(f)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function d = dFdt(x, y, t)
+function d = dFdt(x, y)
 
 d = zeros(6,1);
 d(1) =  x(1)*x(2) + y(1)*y(2);
