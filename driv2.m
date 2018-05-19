@@ -1,10 +1,11 @@
 function driv
+% Homotopy continuation for power flow for s=1 connected component
 
 % matrix A dimensions is n by n
 n = 7;
 
 % construct sparse A0 and A1 with random values
-%rng(0);
+rng(0);
 A0 = spdiags(rand(n,2),0:1,n,n);
 A0(n,1) = rand;
 A1 = spdiags(rand(n,2),0:1,n,n);
@@ -26,14 +27,15 @@ b = F(x, y, A0, A1, zeros(2*n,1), 0);
 F(x, y, A0, A1, b, 1);
 
 % check rank
-J3 = Jac(x, y, A0, A1, 0.1);
-svd(J3);
+J = Jac(x, y, A0, A1, 0.1);
+svd(J);
 
-deltat = 0.1;
+numsteps = 100;
+deltat = 1/numsteps;
 t = 0;
 
-for step = 1:10
-  % predictor step using tangent
+for step = 1:numsteps
+  % predictor using tangent
   J = Jac(x, y, A0, A1, t);
   f = dFdt(x, y, A0, A1);
   inc = -J(:,1:end-1) \ f;
@@ -44,7 +46,7 @@ for step = 1:10
   fprintf('======== time step %d: %f =========\n', step, t);
   fprintf('After predict: %f\n', norm(F(x, y, A0, A1, b, t)));
 
-  % corrector using Newton iterations
+  % corrector using Gauss-Newton iterations
   for iter = 1:5
     J = Jac(x, y, A0, A1, t);
     f = F(x, y, A0, A1, b, t);

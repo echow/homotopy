@@ -6,8 +6,8 @@ y = zeros(3,1);
 x(1) = 1;
 x(2) = 2;
 x(3) = 3;
-y(1) = 1; % imaginary component
-y(2) = 1;
+y(1) = 4; % imaginary component
+y(2) = 5;
 y(3) = 0; % need to enforce this?
 
 % right-hand side for this solution
@@ -18,8 +18,11 @@ b = F2(x, y, 0, zeros(6,1));
 % F2(x, y, 1, b);
 
 % rank is 5
-%J = Jac(x, y, 0.1);
-%J2 = Jac2(x, y, 0.1);
+J = Jac(x, y, 0.1);
+J3 = Jac3(x, y, 0.1);
+J
+J3
+J-J3
 % J = J(1:5,1:5)
 %svd(J)
 
@@ -106,6 +109,20 @@ d(5) = -x(2)*y(3) + x(3)*y(2);
 d(6) = -x(3)*y(1) + x(1)*y(3);
 
 d = 0.5*d;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function J = Jac3(x, y, t);
+A0 = [1 .5 0; 0 1 .5; .5 0 1];
+A1 = [1  1 0; 0 1  1;  1 0 1];
+
+C = (1-t)*A0 + t*A1;
+n = length(C);
+
+Cx = C*x;
+Cy = C*y;
+
+J = [diag(x)*C+diag(Cx)    diag(y)*C+diag(Cy)
+     diag(y)*C-diag(Cy)   -diag(x)*C+diag(Cx)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function J = Jac2(x, y, t);
