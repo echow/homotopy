@@ -6,22 +6,26 @@ y = zeros(3,1);
 x(1) = 1;
 x(2) = 2;
 x(3) = 3;
-y(1) = 1; % imaginary component
-y(2) = 1;
+y(1) = 4; % imaginary component
+y(2) = 5;
 y(3) = 0; % need to enforce this?
 
 % right-hand side for this solution
 b = F(x, y, 0, zeros(6,1));
 
 % check initial solution is not a final solution
-% F(x, y, 1, b)
+F(x, y, 1, b);
+F2(x, y, 1, b);
 
 % rank is 5
-% J = Jac(x, y, 0);
+%J = Jac(x, y, 0.1);
+%J2 = Jac2(x, y, 0.1);
 % J = J(1:5,1:5)
-% svd(J)
+%svd(J)
 
-deltat = 0.001;
+
+
+deltat = 0.0001;
 t = 0;
 
 for step = 1:100
@@ -51,6 +55,19 @@ for step = 1:100
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function f = F2(x, y, t, b)
+
+A0 = [1 .5 0; 0 1 .5; .5 0 1];
+A1 = [1  1 0; 0 1  1;  1 0 1];
+
+C = (1-t)*A0 + t*A1;
+
+z = x + i*y;
+
+f = diag(z)*(C*conj(z)) - (b(1:3)+i*b(4:6));
+f = [real(f); imag(f)];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function f = F(x, y, t, b)
 
 f = zeros(6,1);
@@ -62,6 +79,18 @@ f(3) = x(3)*x(3) + y(3)*y(3) + .5*(1+t) * ( x(3)*x(1) + y(3)*y(1) ) - b(3);
 f(4) = .5*(1+t) * ( -x(1)*y(2) + x(2)*y(1) ) - b(4);
 f(5) = .5*(1+t) * ( -x(2)*y(3) + x(3)*y(2) ) - b(5);
 f(6) = .5*(1+t) * ( -x(3)*y(1) + x(1)*y(3) ) - b(6);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function d = dFdt2(x, y, t)
+
+A0 = [1 .5 0; 0 1 .5; .5 0 1];
+A1 = [1  1 0; 0 1  1;  1 0 1];
+T = (A1-A0);
+
+z = x + i*y;
+
+f = diag(z)*(T*conj(z));
+d = [real(f); imag(f)];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function d = dFdt(x, y, t)
@@ -100,9 +129,9 @@ for i = 1:n
 
     % partial of equation i wrt y_j
     if i == j
-      J(i,2*n+j) = C(i,i)*y(i) + C(i,:)*y;
+      J(i,n+j) = C(i,i)*y(i) + C(i,:)*y;
     else
-      J(i,2*n+j) = C(i,j)*y(i);
+      J(i,n+j) = C(i,j)*y(i);
     end
   end
 
@@ -110,16 +139,16 @@ for i = 1:n
   for j = 1:n
     % partial of equation i wrt x_j
     if i == j
-      J(2*n+i,j) = C(i,i)*y(i) - C(i,:)*y;
+      J(n+i,j) = C(i,i)*y(i) - C(i,:)*y;
     else
-      J(2*n+i,j) = C(i,j)*y(i);
+      J(n+i,j) = C(i,j)*y(i);
     end
 
     % partial of equation i wrt y_j
     if i == j
-      J(2*n+i,2*n+j) = -C(i,i)*x(i) + C(i,:)*x;
+      J(n+i,n+j) = -C(i,i)*x(i) + C(i,:)*x;
     else
-      J(2*n+i,2*n+j) = -C(i,j)*x(i);
+      J(n+i,n+j) = -C(i,j)*x(i);
     end
   end
 
