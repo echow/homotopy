@@ -30,7 +30,7 @@ F(x, y, A0, A1, b, 1);
 J = Jac(x, y, A0, A1, 0.1);
 svd(J);
 
-numsteps = 100;
+numsteps = 5;
 deltat = 1/numsteps;
 t = 0;
 
@@ -51,6 +51,7 @@ for step = 1:numsteps
     J = Jac(x, y, A0, A1, t);
     f = F(x, y, A0, A1, b, t);
     inc = -J(:,1:end-1) \ f;
+    % disp(norm(inc))
     x = x + inc(1:n);
     y(1:n-1) = y(1:n-1) + inc(n+1:end);
     fprintf('Newton step %d: %f\n', iter, norm(F(x, y, A0, A1, b, t)));
