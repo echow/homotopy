@@ -2,19 +2,17 @@ function driv
 % Homotopy continuation for power flow for s=1 connected component
 
 % matrix A dimensions is n by n
-n = 15;
+n = 16;
 
 % construct sparse A0 and A1 with random values
 rng(0);
-A0 = spdiags(my_random_matrix(n,2),0:1,n,n);
-A0(n,1) = my_random_number;
-ep = 0.05;
-A1 = A0 + ep*spdiags(my_random_matrix(n,2),0:1,n,n);
-A1(n,1) = A0(n,1) + ep*my_random_number;
+running_example = @directed_cycle_matrix;
+running_example = @cycle_matrix;
+running_example = @ladder_matrix;
 
-%A0 = [1 .5 0; 0 1 .5; .5 0 1];
-%A1 = [1  1 0; 0 1  1;  1 0 1];
-%n = length(A0);
+A0 = running_example(n);
+ep = 0.05;
+A1 = A0 + ep*running_example(n);
 
 % choose a solution
 x0 = my_random_matrix(n,1);
@@ -104,11 +102,29 @@ Cy = C*y;
 J = [diag(x)*C+diag(Cx)    diag(y)*C+diag(Cy)
      diag(y)*C-diag(Cy)   -diag(x)*C+diag(Cx)];
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5555555%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function r = my_random_number();
 r = rand * 2 - 1;
 function r = my_random_matrix(m,n);
 r = rand(m,n) * 2 - 1;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function A = directed_cycle_matrix(n);
+A = spdiags(my_random_matrix(n,2),0:1,n,n);
+A(n,1) = my_random_number;
 
-   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function A = cycle_matrix(n);
+A = spdiags(my_random_matrix(n,3),-1:1,n,n);
+A(n,1) = my_random_number;
+A(1,n) = my_random_number;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function A = ladder_matrix(n);
+assert(mod(n,2)==0, 'even n expected');
+A = spdiags(my_random_matrix(n,3),-1:1,n,n);
+for i=1:n
+	j = n+1-i;
+  A(i,j) = my_random_number;
+  A(j,i) = my_random_number;
+end   
