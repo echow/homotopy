@@ -1,6 +1,9 @@
 function driv
 % Homotopy continuation for power flow for s=1 connected component
 
+% this version uses lsqr for linear systems
+% and can use various preconditioners
+
 % matrix A dimensions is n by n
 n = 16;
 
@@ -57,8 +60,20 @@ for step = 1:numsteps
   % corrector using Gauss-Newton iterations
   for iter = 1:10
     J = Jac(x, y, A0, A1, t);
+    J = sparse(J); % UNDONE: form J directly as sparse matrix
     f = F(x, y, A0, A1, b0, b1, t);
-    inc = -J(:,1:end-1) \ f;
+    % inc = -J(:,1:end-1) \ f;
+%   jtj = J(:,1:end-1)'*J(:,1:end-1); R = ichol(jtj)'; % ichol pivot fails
+%   jtj = J(:,1:end-1)'*J(:,1:end-1); R = chol(jtj);
+%   [~, R] = qr(J(:,1:end-1)); R=R(1:end-1,:);
+    [~, R] = imgs(J(:,1:end-1));
+%   R = precon_sgs(J(:,1:end-1));
+%   R = eye(2*n-1); % no preconditioning
+%   R = precon_sgs(J(:,1:end-1)); % also init guess for paric_ref
+%   jtj = J(:,1:end-1)'*J(:,1:end-1); jtj=sparse(jtj); [R dummy] = paric_ref(jtj, R, 1); % pivot fails
+    [inc flag relres lsqr_iter] = lsqr(J(:,1:end-1), -f, 1e-6, 1000, R);
+    assert(flag == 0, 'LSQR failed');
+    fprintf('     LSQR steps %d\n', lsqr_iter);
     x = x + inc(1:n);
     y(1:n-1) = y(1:n-1) + inc(n+1:end);
     res = norm(F(x, y, A0, A1, b0, b1, t));
@@ -123,3 +138,9 @@ for i=1:n
   A(i,j) = my_random_number;
   A(j,i) = my_random_number;
 end   
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function R = precon_sgs(J)
+% upper triangular Symmetric Gauss-Seidel preconditioner
+jtj = J'*J;
+d = 1 ./ sqrt(diag(jtj));
+R = diag(d) * triu(jtj);
